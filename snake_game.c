@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 
         if (!gameOver)
         {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
             SDL_RenderFillRect(renderer, &food);
 
             drawSnake(renderer, &snakeBody[0], snakeLength);
