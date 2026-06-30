@@ -40,7 +40,7 @@ void drawSnake(SDL_Renderer *renderer, SDL_FRect *body, int length)
     {
         if (i == 0)
         {
-            SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
+            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
         }
         else
         {
