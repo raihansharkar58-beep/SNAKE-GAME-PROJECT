@@ -3,25 +3,26 @@
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+
 #define HEIGHT 880
 #define WIDTH 1080
 #define GRID_SIZE 20
 #define GRID_COLS (WIDTH / GRID_SIZE)
 #define GRID_ROWS (HEIGHT / GRID_SIZE)
 #define MAX_SNAKE_LENGTH (GRID_COLS * GRID_ROWS)
+
 int score = 0;
-bool CheckCollisionWithWall(SDL_FRect *head)
+
+bool checkCollisionWithWall(SDL_FRect *head)
 {
     if (head->x < 0 || head->y < 0 || head->x >= WIDTH || head->y >= HEIGHT)
     {
-
         return true;
     }
-
     return false;
 }
 
-bool CheckSelfCollision(SDL_FRect *body, int length)
+bool checkSelfCollision(SDL_FRect *body, int length)
 {
     for (int i = 1; i < length; i++)
     {
@@ -33,7 +34,7 @@ bool CheckSelfCollision(SDL_FRect *body, int length)
     return false;
 }
 
-void DrawSnake(SDL_Renderer *renderer, SDL_FRect *body, int length)
+void drawSnake(SDL_Renderer *renderer, SDL_FRect *body, int length)
 {
     for (int i = 0; i < length; i++)
     {
@@ -47,12 +48,9 @@ void DrawSnake(SDL_Renderer *renderer, SDL_FRect *body, int length)
         }
         SDL_RenderFillRect(renderer, &body[i]);
     }
-
-    // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-    // SDL_RenderFillRect(renderer, head);
 }
 
-void ScoreCount(SDL_Renderer *renderer, TTF_Font *font)
+void scoreCount(SDL_Renderer *renderer, TTF_Font *font)
 {
     if (font == NULL)
         return;
@@ -81,32 +79,33 @@ void ScoreCount(SDL_Renderer *renderer, TTF_Font *font)
     }
 }
 
-void SpawnFood(SDL_FRect *food, SDL_FRect *body, int snake_length)
+void spawnFood(SDL_FRect *food, SDL_FRect *body, int snakeLength)
 {
-    bool is_food_on_snake = true;
-    while (is_food_on_snake)
+    bool isFoodOnSnake = true;
+    while (isFoodOnSnake)
     {
-        int random_col = rand() % GRID_COLS;
-        int random_row = rand() % GRID_ROWS;
+        int randomCol = rand() % GRID_COLS;
+        int randomRow = rand() % GRID_ROWS;
 
-        food->x = (float)(random_col * GRID_SIZE);
-        food->y = (float)(random_row * GRID_SIZE);
+        food->x = (float)(randomCol * GRID_SIZE);
+        food->y = (float)(randomRow * GRID_SIZE);
         food->w = GRID_SIZE;
         food->h = GRID_SIZE;
 
-        is_food_on_snake = false;
+        isFoodOnSnake = false;
 
-        for (int i = 0; i < snake_length; i++)
+        for (int i = 0; i < snakeLength; i++)
         {
             if (food->x == body[i].x && food->y == body[i].y)
             {
-                is_food_on_snake = true;
+                isFoodOnSnake = true;
                 break;
             }
         }
     }
 }
-bool CollisionWithFood(SDL_FRect *head, SDL_FRect *food)
+
+bool collisionWithFood(SDL_FRect *head, SDL_FRect *food)
 {
     if (head->x == food->x && head->y == food->y)
     {
@@ -115,30 +114,30 @@ bool CollisionWithFood(SDL_FRect *head, SDL_FRect *food)
     return false;
 }
 
-void DrawGameOverAndLastScore(SDL_Renderer *renderer, TTF_Font *font, int current_score)
+void drawGameOverAndLastScore(SDL_Renderer *renderer, TTF_Font *font, int currentScore)
 {
     if (font == NULL)
     {
         SDL_Log("game Over");
         return;
     }
-    SDL_Color Textcolor = {255, 255, 255, 255};
-    SDL_Surface *TextSurface = TTF_RenderText_Blended(font, "Game Over", 0, Textcolor);
-    if (TextSurface != NULL)
+    SDL_Color textColor = {255, 255, 255, 255};
+    SDL_Surface *textSurface = TTF_RenderText_Blended(font, "Game Over", 0, textColor);
+    if (textSurface != NULL)
     {
-        SDL_Texture *TextTexture = SDL_CreateTextureFromSurface(renderer, TextSurface);
-        if (TextTexture != NULL)
+        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        if (textTexture != NULL)
         {
             SDL_FRect dstRect;
-            dstRect.w = (float)TextSurface->w;
-            dstRect.h = (float)TextSurface->h;
+            dstRect.w = (float)textSurface->w;
+            dstRect.h = (float)textSurface->h;
             dstRect.x = (WIDTH - dstRect.w) / 2.0f;
             dstRect.y = (HEIGHT - dstRect.h) / 2.0f;
-            SDL_RenderTexture(renderer, TextTexture, NULL, &dstRect);
+            SDL_RenderTexture(renderer, textTexture, NULL, &dstRect);
 
             char scoreStr[32];
-            sprintf(scoreStr, "Total Score: %d", current_score);
-            SDL_Surface *scoreSurface = TTF_RenderText_Blended(font, scoreStr, 0, Textcolor);
+            sprintf(scoreStr, "Total Score: %d", currentScore);
+            SDL_Surface *scoreSurface = TTF_RenderText_Blended(font, scoreStr, 0, textColor);
             if (scoreSurface != NULL)
             {
                 SDL_Texture *scoreTexture = SDL_CreateTextureFromSurface(renderer, scoreSurface);
@@ -155,9 +154,9 @@ void DrawGameOverAndLastScore(SDL_Renderer *renderer, TTF_Font *font, int curren
                 }
                 SDL_DestroySurface(scoreSurface);
             }
-            SDL_DestroyTexture(TextTexture);
+            SDL_DestroyTexture(textTexture);
         }
-        SDL_DestroySurface(TextSurface);
+        SDL_DestroySurface(textSurface);
     }
 }
 
@@ -198,83 +197,89 @@ int main(int argc, char *argv[])
         SDL_Log("Font loading error", SDL_GetError());
     }
 
-    SDL_FRect snake_body[MAX_SNAKE_LENGTH];
-    int snake_length = 2;
-    snake_body[0].x = GRID_SIZE;
-    snake_body[0].y = HEIGHT / 2;
-    snake_body[0].h = GRID_SIZE;
-    snake_body[0].w = GRID_SIZE;
+    SDL_FRect snakeBody[MAX_SNAKE_LENGTH];
+    int snakeLength = 3;
+    snakeBody[0].x = 2*GRID_SIZE;
+    snakeBody[0].y = HEIGHT / 2;
+    snakeBody[0].h = GRID_SIZE;
+    snakeBody[0].w = GRID_SIZE;
 
-    snake_body[1].x = 0.0;
-    snake_body[1].y = HEIGHT / 2;
-    snake_body[1].h = GRID_SIZE;
-    snake_body[1].w = GRID_SIZE;
+    snakeBody[1].x = GRID_SIZE;
+    snakeBody[1].y = HEIGHT / 2;
+    snakeBody[1].h = GRID_SIZE;
+    snakeBody[1].w = GRID_SIZE;
+
+
+    snakeBody[2].x = 0.0;
+    snakeBody[2].y = HEIGHT / 2;
+    snakeBody[2].h = GRID_SIZE;
+    snakeBody[2].w = GRID_SIZE;
 
     SDL_FRect food;
-    SpawnFood(&food, snake_body, snake_length);
+    spawnFood(&food, snakeBody, snakeLength);
 
-    float dir_x = 0.0f;
-    float dir_y = 0.0f;
+    float dirX = 0.0f;
+    float dirY = 0.0f;
 
-    bool isrunning = true;
-    bool game_over = false;
-    bool is_paused = false;
+    bool isRunning = true;
+    bool gameOver = false;
+    bool isPaused = false;
     SDL_Event event;
 
-    while (isrunning)
+    while (isRunning)
     {
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
             {
-                isrunning = false;
+                isRunning = false;
             }
             else if (event.type == SDL_EVENT_KEY_DOWN)
             {
-                if (game_over)
+                if (gameOver)
                 {
                     if (event.key.key == SDLK_ESCAPE)
                     {
-                        isrunning = false;
+                        isRunning = false;
                         continue;
                     }
                 }
-                if (event.key.key == SDLK_SPACE && !game_over)
+                if (event.key.key == SDLK_SPACE && !gameOver)
                 {
-                    is_paused = !is_paused;
+                    isPaused = !isPaused;
                     continue;
                 }
 
-                if (!is_paused)
+                if (!isPaused)
                 {
                     switch (event.key.key)
                     {
                     case SDLK_UP:
-                        if (dir_y == 0.0f)
+                        if (dirY == 0.0f)
                         {
-                            dir_x = 0.0f;
-                            dir_y = -GRID_SIZE;
+                            dirX = 0.0f;
+                            dirY = -GRID_SIZE;
                         }
                         break;
                     case SDLK_DOWN:
-                        if (dir_y == 0.0f)
+                        if (dirY == 0.0f)
                         {
-                            dir_x = 0.0f;
-                            dir_y = GRID_SIZE;
+                            dirX = 0.0f;
+                            dirY = GRID_SIZE;
                         }
                         break;
                     case SDLK_LEFT:
-                        if (dir_x == 0.0f)
+                        if (dirX == 0.0f)
                         {
-                            dir_x = -GRID_SIZE;
-                            dir_y = 0.0f;
+                            dirX = -GRID_SIZE;
+                            dirY = 0.0f;
                         }
                         break;
                     case SDLK_RIGHT:
-                        if (dir_x == 0.0f)
+                        if (dirX == 0.0f)
                         {
-                            dir_x = GRID_SIZE;
-                            dir_y = 0.0f;
+                            dirX = GRID_SIZE;
+                            dirY = 0.0f;
                         }
                         break;
                     }
@@ -282,55 +287,50 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (!game_over && !is_paused)
+        if (!gameOver && !isPaused)
         {
-            if (dir_x != 0.0f || dir_y != 0.0)
+            if (dirX != 0.0f || dirY != 0.0)
             {
-                for (int i = snake_length - 1; i > 0; i--)
+                for (int i = snakeLength - 1; i > 0; i--)
                 {
-                    snake_body[i] = snake_body[i - 1];
+                    snakeBody[i] = snakeBody[i - 1];
                 }
-                snake_body[0].x += dir_x;
-                snake_body[0].y += dir_y;
+                snakeBody[0].x += dirX;
+                snakeBody[0].y += dirY;
             }
-            if (CollisionWithFood(&snake_body[0], &food))
+            if (collisionWithFood(&snakeBody[0], &food))
             {
                 score += 10;
-                if (snake_length < MAX_SNAKE_LENGTH)
+                if (snakeLength < MAX_SNAKE_LENGTH)
                 {
-                    snake_body[snake_length] = snake_body[snake_length - 1];
-                    snake_body[snake_length].x = -GRID_SIZE;
-                    snake_body[snake_length].y = -GRID_SIZE;
-                    snake_length++;
+                    snakeBody[snakeLength] = snakeBody[snakeLength - 1];
+                    snakeBody[snakeLength].x = -GRID_SIZE;
+                    snakeBody[snakeLength].y = -GRID_SIZE;
+                    snakeLength++;
                 }
-                SpawnFood(&food, snake_body, snake_length);
+                spawnFood(&food, snakeBody, snakeLength);
             }
-            if (CheckCollisionWithWall(&snake_body[0]) || CheckSelfCollision(snake_body, snake_length))
+            if (checkCollisionWithWall(&snakeBody[0]) || checkSelfCollision(snakeBody, snakeLength))
             {
-
-                game_over = true;
+                gameOver = true;
             }
         }
 
         SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
-
         SDL_RenderClear(renderer);
 
-        if (!game_over)
+        if (!gameOver)
         {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
             SDL_RenderFillRect(renderer, &food);
 
-            DrawSnake(renderer, &snake_body[0], snake_length);
-            ScoreCount(renderer, font);
+            drawSnake(renderer, &snakeBody[0], snakeLength);
+            scoreCount(renderer, font);
         }
-
         else
         {
-            DrawGameOverAndLastScore(renderer, font, score);
+            drawGameOverAndLastScore(renderer, font, score);
         }
-
-        // SDL_RenderFillRect(renderer, &snake_head);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(200);
@@ -344,4 +344,6 @@ int main(int argc, char *argv[])
     SDL_DestroyWindow(window);
     TTF_Quit();
     SDL_Quit();
+    
+    return 0;
 }
